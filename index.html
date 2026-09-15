@@ -346,17 +346,35 @@ function generateQuestions(mode) {
    音声再生（ファイルが無くてもアプリは止まらない）
    ========================================================= */
 
+// 再生中のAudioを外側の変数で保持しておく。
+// （ローカル変数だけだと、iPhone Safariが再生途中でも
+//  「参照されていないオブジェクト」とみなして回収し、
+//  再生が気まぐれに中断されることがあるため）
+let currentAudio = null;
+
 function playAudio(path, statusElId) {
   const statusEl = document.getElementById(statusElId);
   if (statusEl) statusEl.textContent = '';
+
+  // 直前の音声が残っていたら、そのイベント通知に惑わされないよう先に止める
+  if (currentAudio) {
+    currentAudio.onerror = null;
+    currentAudio.pause();
+  }
+
   try {
     const audio = new Audio(path);
+    currentAudio = audio;
+
     audio.addEventListener('error', () => {
+      if (currentAudio !== audio) return; // 差し替え済みの古い音声からの通知は無視
       if (statusEl) statusEl.textContent = '🔇 音声ファイル未登録（選択肢の確認はできます）';
     });
+
     const p = audio.play();
     if (p && typeof p.catch === 'function') {
       p.catch(() => {
+        if (currentAudio !== audio) return;
         if (statusEl) statusEl.textContent = '🔇 音声を再生できませんでした';
       });
     }
