@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="聞き分け道場">
+<title>韓国語 聞き分けトレーニング</title>
+<style>
+  :root{
+    --bg:#F1F3EF;
+    --surface:#FFFFFF;
+    --ink:#20242E;
+    --ink-soft:#63697A;
+    --primary:#33415C;
+    --primary-dark:#232C3E;
+    --primary-tint:#E7EBF1;
+    --gold:#C4933C;
+    --gold-tint:#FBF2E1;
+    --correct:#2F7D57;
+    --correct-bg:#E4F3EA;
+    --error:#B0473F;
+    --error-bg:#F8E9E7;
+    --border:#DDE1D8;
+    --radius:18px;
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0; padding:0; width:100%; overflow-x:hidden;
+    background:var(--bg); color:var(--ink);
+    overscroll-behavior-y:contain;
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  }
+  body{
+    min-height:100vh; min-height:100dvh;
+    padding-top:env(safe-area-inset-top);
+    padding-bottom:env(safe-area-inset-bottom);
+    padding-left:env(safe-area-inset-left);
+    padding-right:env(safe-area-inset-right);
+  }
+  button{ font-family:inherit; }
+
+  #app{
+    max-width:520px; margin:0 auto;
+    padding:28px 20px 40px;
+    display:flex; flex-direction:column;
+    min-height:100vh; min-height:100dvh;
+  }
+
+  /* ---------- Home screen ---------- */
+  .home-header{ text-align:center; margin-bottom:28px; }
+  .home-header h1{
+    font-size:1.5rem; font-weight:700; margin:0 0 8px;
+    color:var(--primary-dark); line-height:1.4;
+  }
+  .home-sub{ margin:0; color:var(--ink-soft); font-size:1rem; }
+
+  .cat-grid{ display:flex; flex-direction:column; gap:14px; }
+
+  .cat-card{
+    display:flex; flex-direction:column; align-items:flex-start;
+    gap:6px; width:100%; text-align:left;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:6px solid var(--primary);
+    border-radius:var(--radius);
+    padding:18px 20px;
+    min-height:78px;
+    cursor:pointer;
+  }
+  .cat-card:active{ background:var(--primary-tint); }
+  .cat-label{ font-size:1.35rem; font-weight:700; color:var(--primary-dark); }
+  .cat-sub{ font-size:1.05rem; color:var(--ink-soft); letter-spacing:0.02em; }
+
+  .random-card{
+    margin-top:8px;
+    border-left:6px solid var(--gold);
+    background:var(--gold-tint);
+  }
+  .random-card:active{ background:#F5E7C9; }
+  .random-card .cat-label{ color:#8A611F; }
+  .random-card .cat-sub{ color:#8A611F; opacity:0.85; }
+
+  .home-footnote{
+    text-align:center; margin-top:28px;
+    color:var(--ink-soft); font-size:0.85rem;
+  }
+
+  /* ---------- Quiz screen ---------- */
+  .quiz-progress{
+    text-align:center; font-size:1rem; color:var(--ink-soft);
+    margin-bottom:22px; font-weight:600;
+  }
+
+  .play-wrap{ display:flex; justify-content:center; margin-bottom:10px; }
+  .play-btn{
+    width:104px; height:104px; border-radius:50%;
+    background:var(--primary); color:#fff; border:none;
+    font-size:2.2rem; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .play-btn:active{ background:var(--primary-dark); }
+
+  .audio-status{
+    text-align:center; min-height:20px;
+    font-size:0.85rem; color:var(--ink-soft);
+    margin:6px 0 20px;
+  }
+
+  .choice-list{ display:flex; flex-direction:column; gap:14px; }
+  .choice-btn{
+    width:100%; min-height:72px;
+    background:var(--surface);
+    border:2px solid var(--border);
+    border-radius:var(--radius);
+    font-size:1.6rem; font-weight:700; color:var(--ink);
+    cursor:pointer;
+  }
+  .choice-btn:active{ background:var(--primary-tint); }
+  .choice-btn.disabled{ pointer-events:none; }
+  .choice-btn.correct{
+    background:var(--correct-bg); border-color:var(--correct); color:var(--correct);
+  }
+  .choice-btn.wrong-selected{
+    background:var(--error-bg); border-color:var(--error); color:var(--error);
+  }
+
+  .feedback{
+    text-align:center; font-size:1.25rem; font-weight:700;
+    margin:24px 0 6px; opacity:0; transition:opacity 0.15s ease;
+  }
+  .feedback.show{ opacity:1; }
+  .feedback.correct{ color:var(--correct); }
+  .feedback.wrong{ color:var(--error); }
+
+  .post-actions{ display:flex; flex-direction:column; gap:12px; margin-top:18px; }
+  .replay-btn{
+    width:100%; min-height:56px;
+    background:var(--surface); border:2px solid var(--primary);
+    color:var(--primary); font-weight:700; font-size:1.05rem;
+    border-radius:var(--radius); cursor:pointer;
+  }
+  .replay-btn:active{ background:var(--primary-tint); }
+
+  .next-btn{
+    width:100%; min-height:60px;
+    background:var(--primary); color:#fff; border:none;
+    font-weight:700; font-size:1.15rem;
+    border-radius:var(--radius); cursor:pointer;
+  }
+  .next-btn:active{ background:var(--primary-dark); }
+
+  .spacer{ flex:1; }
+
+  /* ---------- Result screen ---------- */
+  .result-header{ text-align:center; margin-bottom:8px; }
+  .result-score{ font-size:2.6rem; font-weight:800; color:var(--primary-dark); }
+  .result-rate{ font-size:1.1rem; color:var(--ink-soft); margin-top:4px; }
+
+  .result-section{ margin-top:28px; }
+  .result-section h2{
+    font-size:1rem; color:var(--ink-soft); font-weight:700;
+    margin:0 0 10px;
+  }
+  .stat-list, .confusion-list{
+    list-style:none; margin:0; padding:0;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .stat-list li, .confusion-list li{
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:12px 16px;
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:1rem;
+  }
+  .confusion-list li{ font-size:1.15rem; font-weight:600; }
+  .confusion-empty{ color:var(--ink-soft); font-size:0.95rem; padding:6px 2px; }
+
+  .result-actions{ display:flex; flex-direction:column; gap:12px; margin-top:32px; }
+  .btn-primary{
+    width:100%; min-height:58px; background:var(--primary); color:#fff;
+    border:none; border-radius:var(--radius); font-weight:700; font-size:1.1rem;
+    cursor:pointer;
+  }
+  .btn-primary:active{ background:var(--primary-dark); }
+  .btn-secondary{
+    width:100%; min-height:58px; background:var(--surface); color:var(--primary);
+    border:2px solid var(--primary); border-radius:var(--radius);
+    font-weight:700; font-size:1.1rem; cursor:pointer;
+  }
+  .btn-secondary:active{ background:var(--primary-tint); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* =========================================================
+   教材データ（ここを直せば単語・話者・カテゴリーを追加できます）
+   ========================================================= */
+
+// 話者一覧。role: 'training' = 練習で使う話者 / 'test' = 将来の
+// 「未学習話者テスト」用に今は温存しておく話者。
+const SPEAKERS = [
+  { id: 'speaker01', role: 'training' },
+  { id: 'speaker02', role: 'training' },
+  { id: 'speaker03', role: 'training' },
+  { id: 'speaker04', role: 'training' },
+  { id: 'speaker05', role: 'test' },
+  { id: 'speaker06', role: 'test' },
+];
+
+// カテゴリーと単語。fileKey は音声ファイル名に使うローマ字表記。
+const CATEGORIES = [
+  {
+    id: 'bp', label: 'ㅂ・ㅃ・ㅍ', subtitle: '불 / 뿔 / 풀',
+    words: [
+      { phoneme: 'ㅂ', hangul: '불', fileKey: 'bul' },
+      { phoneme: 'ㅃ', hangul: '뿔', fileKey: 'ppul' },
+      { phoneme: 'ㅍ', hangul: '풀', fileKey: 'pul' },
+    ],
+  },
+  {
+    id: 'dt', label: 'ㄷ・ㄸ・ㅌ', subtitle: '달 / 딸 / 탈',
+    words: [
+      { phoneme: 'ㄷ', hangul: '달', fileKey: 'dal' },
+      { phoneme: 'ㄸ', hangul: '딸', fileKey: 'ttal' },
+      { phoneme: 'ㅌ', hangul: '탈', fileKey: 'tal' },
+    ],
+  },
+  {
+    id: 'gk', label: 'ㄱ・ㄲ・ㅋ', subtitle: '갈 / 깔 / 칼',
+    words: [
+      { phoneme: 'ㄱ', hangul: '갈', fileKey: 'gal' },
+      { phoneme: 'ㄲ', hangul: '깔', fileKey: 'kkal' },
+      { phoneme: 'ㅋ', hangul: '칼', fileKey: 'kal' },
+    ],
+  },
+  {
+    id: 'jjc', label: 'ㅈ・ㅉ・ㅊ', subtitle: '자다 / 짜다 / 차다',
+    words: [
+      { phoneme: 'ㅈ', hangul: '자다', fileKey: 'jada' },
+      { phoneme: 'ㅉ', hangul: '짜다', fileKey: 'jjada' },
+      { phoneme: 'ㅊ', hangul: '차다', fileKey: 'chada' },
+    ],
+  },
+];
+
+// 音声ファイルのパスを組み立てる。
+// 例: audio/bp/bul/speaker01.mp3
+function buildAudioPath(category, word, speaker) {
+  return `audio/${category.id}/${word.fileKey}/${speaker.id}.mp3`;
+}
+
+function findWordByFileKey(fileKey) {
+  for (const cat of CATEGORIES) {
+    const w = cat.words.find((w) => w.fileKey === fileKey);
+    if (w) return { word: w, category: cat };
+  }
+  return null;
+}
+
+/* =========================================================
+   出題ロジック
+   ========================================================= */
+
+function shuffleArray(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// total 個の枠に items をなるべく均等に割り振ってからシャッフルする
+function balancedAssignment(total, items) {
+  const m = items.length;
+  const base = Math.floor(total / m);
+  const rem = total % m;
+  const order = shuffleArray(items.map((_, i) => i));
+  const result = [];
+  order.forEach((idx, pos) => {
+    const count = base + (pos < rem ? 1 : 0);
+    for (let c = 0; c < count; c++) result.push(items[idx]);
+  });
+  return shuffleArray(result);
+}
+
+// 隣り合う問題の音声ファイルが同じにならないよう軽く調整する
+function dedupeAdjacentAudio(qs) {
+  for (let i = 1; i < qs.length; i++) {
+    if (qs[i].audioPath === qs[i - 1].audioPath) {
+      for (let j = i + 1; j < qs.length; j++) {
+        if (qs[j].audioPath !== qs[i - 1].audioPath && qs[j].audioPath !== qs[i].audioPath) {
+          [qs[i], qs[j]] = [qs[j], qs[i]];
+          break;
+        }
+      }
+    }
+  }
+  return qs;
+}
+
+function generateQuestions(mode) {
+  const total = 10;
+  let catSeq;
+  if (mode === 'random') {
+    catSeq = balancedAssignment(total, CATEGORIES);
+  } else {
+    const cat = CATEGORIES.find((c) => c.id === mode);
+    catSeq = Array(total).fill(cat);
+  }
+
+  const counts = {};
+  catSeq.forEach((c) => { counts[c.id] = (counts[c.id] || 0) + 1; });
+
+  const wordQueues = {};
+  Object.keys(counts).forEach((id) => {
+    const cat = CATEGORIES.find((c) => c.id === id);
+    wordQueues[id] = balancedAssignment(counts[id], cat.words);
+  });
+
+  // 練習では training 話者のみ使用。test 話者は将来の
+  // 「未学習話者テスト」のために温存する。
+  const trainingSpeakers = SPEAKERS.filter((s) => s.role === 'training');
+
+  const questions = catSeq.map((cat) => {
+    const word = wordQueues[cat.id].shift();
+    const speaker = trainingSpeakers[Math.floor(Math.random() * trainingSpeakers.length)];
+    return {
+      category: cat,
+      word,
+      speaker,
+      audioPath: buildAudioPath(cat, word, speaker),
+      choices: shuffleArray(cat.words),
+    };
+  });
+
+  return dedupeAdjacentAudio(questions);
+}
+
+/* =========================================================
+   音声再生（ファイルが無くてもアプリは止まらない）
+   ========================================================= */
+
+function playAudio(path, statusElId) {
+  const statusEl = document.getElementById(statusElId);
+  if (statusEl) statusEl.textContent = '';
+  try {
+    const audio = new Audio(path);
+    audio.addEventListener('error', () => {
+      if (statusEl) statusEl.textContent = '🔇 音声ファイル未登録（選択肢の確認はできます）';
+    });
+    const p = audio.play();
+    if (p && typeof p.catch === 'function') {
+      p.catch(() => {
+        if (statusEl) statusEl.textContent = '🔇 音声を再生できませんでした';
+      });
+    }
+  } catch (e) {
+    if (statusEl) statusEl.textContent = '🔇 音声を再生できませんでした';
+  }
+}
+
+/* =========================================================
+   アプリの状態
+   ========================================================= */
+
+const state = {
+  screen: 'home',
+  mode: null,
+  questions: [],
+  index: 0,
+  answer: null,        // { chosenFileKey, correct }
+  score: 0,
+  categoryStats: {},   // { [catId]: { label, correct, total } }
+  confusions: {},       // { 'correctFileKey|chosenFileKey': count }
+};
+
+function startQuiz(mode) {
+  state.mode = mode;
+  state.questions = generateQuestions(mode);
+  state.index = 0;
+  state.answer = null;
+  state.score = 0;
+  state.categoryStats = {};
+  state.confusions = {};
+  state.screen = 'quiz';
+  render();
+}
+
+function handleAnswer(fileKey) {
+  if (state.answer) return; // 既に回答済みなら何もしない
+  const q = state.questions[state.index];
+  const correct = fileKey === q.word.fileKey;
+  state.answer = { chosenFileKey: fileKey, correct };
+
+  if (!state.categoryStats[q.category.id]) {
+    state.categoryStats[q.category.id] = { label: q.category.label, correct: 0, total: 0 };
+  }
+  state.categoryStats[q.category.id].total++;
+
+  if (correct) {
+    state.score++;
+    state.categoryStats[q.category.id].correct++;
+  } else {
+    const key = `${q.word.fileKey}|${fileKey}`;
+    state.confusions[key] = (state.confusions[key] || 0) + 1;
+  }
+  render();
+}
+
+function nextQuestion() {
+  if (!state.answer) return;
+  if (state.index < state.questions.length - 1) {
+    state.index++;
+    state.answer = null;
+    render();
+  } else {
+    state.screen = 'result';
+    render();
+  }
+}
+
+/* =========================================================
+   画面描画
+   ========================================================= */
+
+function renderHome() {
+  const cards = CATEGORIES.map((cat) => `
+    <button class="cat-card" data-action="start" data-mode="${cat.id}">
+      <span class="cat-label">${cat.label}</span>
+      <span class="cat-sub">${cat.subtitle}</span>
+    </button>
+  `).join('');
+
+  return `
+    <header class="home-header">
+      <h1>韓国語 聞き分けトレーニング</h1>
+      <p class="home-sub">今日の討伐相手を選ぶ</p>
+    </header>
+    <div class="cat-grid">
+      ${cards}
+      <button class="cat-card random-card" data-action="start" data-mode="random">
+        <span class="cat-label">🎲 ランダム討伐</span>
+        <span class="cat-sub">4種類の敵が入り乱れる</span>
+      </button>
+    </div>
+    <p class="home-footnote">1回10問・音を聞いて選ぶだけ</p>
+  `;
+}
+
+function renderQuiz() {
+  const q = state.questions[state.index];
+  const answered = !!state.answer;
+
+  const choicesHtml = q.choices.map((w) => {
+    let cls = 'choice-btn';
+    if (answered) {
+      cls += ' disabled';
+      if (w.fileKey === q.word.fileKey) cls += ' correct';
+      else if (state.answer.chosenFileKey === w.fileKey) cls += ' wrong-selected';
+    }
+    return `<button class="${cls}" data-action="answer" data-filekey="${w.fileKey}">${w.hangul}</button>`;
+  }).join('');
+
+  let feedbackHtml = '';
+  let postActionsHtml = '';
+  if (answered) {
+    if (state.answer.correct) {
+      feedbackHtml = `<div class="feedback show correct">⭕ 正解！</div>`;
+    } else {
+      feedbackHtml = `<div class="feedback show wrong">❌ 不正解<br>今度は「${q.word.hangul}」だと意識して聞いてみよう</div>`;
+    }
+    postActionsHtml = `
+      <div class="post-actions">
+        <button class="replay-btn" data-action="play-correct">🔁 もう一度聞く</button>
+        <button class="next-btn" data-action="next">次へ</button>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="quiz-progress">問題 ${state.index + 1} / ${state.questions.length}</div>
+    <div class="play-wrap">
+      <button class="play-btn" data-action="play-question" aria-label="音声を再生">🔊</button>
+    </div>
+    <div class="audio-status" id="audio-status"></div>
+    <div class="choice-list">${choicesHtml}</div>
+    ${feedbackHtml}
+    ${postActionsHtml}
+    <div class="spacer"></div>
+  `;
+}
+
+function renderResult() {
+  const total = state.questions.length;
+  const pct = Math.round((state.score / total) * 100);
+
+  const statsHtml = Object.values(state.categoryStats).map((s) => `
+    <li><span>${s.label}</span><span>${s.correct} / ${s.total}</span></li>
+  `).join('');
+
+  const confusionEntries = Object.entries(state.confusions).sort((a, b) => b[1] - a[1]);
+  const confusionHtml = confusionEntries.length
+    ? confusionEntries.map(([key, count]) => {
+        const [correctKey, chosenKey] = key.split('|');
+        const correctWord = findWordByFileKey(correctKey).word;
+        const chosenWord = findWordByFileKey(chosenKey).word;
+        return `<li><span>${correctWord.hangul} → ${chosenWord.hangul}</span><span>${count}回</span></li>`;
+      }).join('')
+    : `<p class="confusion-empty">聞き間違いなし。お見事！</p>`;
+
+  return `
+    <div class="result-header">
+      <div class="result-score">${state.score} / ${total}</div>
+      <div class="result-rate">正答率 ${pct}%</div>
+    </div>
+
+    <div class="result-section">
+      <h2>カテゴリー別</h2>
+      <ul class="stat-list">${statsHtml}</ul>
+    </div>
+
+    <div class="result-section">
+      <h2>間違えた方向</h2>
+      <ul class="confusion-list">${confusionHtml}</ul>
+    </div>
+
+    <div class="result-actions">
+      <button class="btn-primary" data-action="restart">もう一度</button>
+      <button class="btn-secondary" data-action="home">ホームへ</button>
+    </div>
+  `;
+}
+
+function render() {
+  const app = document.getElementById('app');
+  if (state.screen === 'home') app.innerHTML = renderHome();
+  else if (state.screen === 'quiz') app.innerHTML = renderQuiz();
+  else app.innerHTML = renderResult();
+}
+
+/* =========================================================
+   クリック処理（イベント委譲）
+   ========================================================= */
+
+document.getElementById('app').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+
+  if (action === 'start') {
+    startQuiz(btn.dataset.mode);
+  } else if (action === 'play-question') {
+    const q = state.questions[state.index];
+    playAudio(q.audioPath, 'audio-status');
+  } else if (action === 'play-correct') {
+    const q = state.questions[state.index];
+    playAudio(q.audioPath, 'audio-status');
+  } else if (action === 'answer') {
+    handleAnswer(btn.dataset.filekey);
+  } else if (action === 'next') {
+    nextQuestion();
+  } else if (action === 'restart') {
+    startQuiz(state.mode);
+  } else if (action === 'home') {
+    state.screen = 'home';
+    render();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
